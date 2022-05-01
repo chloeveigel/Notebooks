@@ -1,0 +1,204 @@
+---
+title: Adrian Martinez left Nebraska.. for better or for worse?
+author: Chloe Veigel
+date: '2022-04-01'
+slug: adrian-martinez
+categories: []
+tags: []
+---
+
+
+For the past couple of years, Nebraska fans have had a love/hate relationship with their football team. Since Scott Frost came on as Head Coach in 2018, the Huskers have achieved a total of 15 wins and, prepare yourself, a total of 29 losses.
+
+
+With 2021 being another rocky season for Nebraska football, the quarterback, Adrian Martinez, was on the front lines of the hate being received. He has now transferred to play at Kansas State, making many Husker fans appreciative, but was he really the issue? Let's take a look.
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+library(tidyverse)
+library(cfbfastR)
+library(ggalt)
+library(cowplot)
+```
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+players21 <- cfbd_stats_season_player(
+  2021,
+  season_type = "regular"
+)
+```
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+rosters <- cfbd_team_roster(2021)
+```
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+players21 <- players21 %>% inner_join(rosters)
+```
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+rush <- players21 %>% filter(position == "QB") %>% filter(category == "rushing") %>% select(athlete_id, team, conference, player, rushing_yds)
+
+pass <- players21 %>% filter(position == "QB") %>% filter(category == "passing") %>% select(athlete_id, team, conference, player, passing_yds, passing_att, passing_completions, passing_pct)
+```
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+totalyards <- rush %>% inner_join(pass)
+```
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+qbs <- totalyards %>% filter(passing_yds > 500)
+```
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+am <- totalyards %>% filter(player == "Adrian Martinez")
+```
+
+
+The first thing we want to look at is how Martinez stands next to all of the other QBs in college football.
+
+
+Nebraska had multiple offensive players suffer injuries throughout the season, leaving Martinez as the Huskers's biggest offensive weapon. His rushing yards are high and his passing yards... not so high. He did what he could with the situation at hand, seeming to juggle many different positions. A possible, rather big, reason Martinez transferred to Kansas State was to be able to show off his arm.
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+ggplot() + 
+  geom_point(data=qbs, aes(x=rushing_yds, y=passing_yds), color="grey") + 
+  geom_point(data=am, aes(x=rushing_yds, y=passing_yds), color="#512888") +
+  geom_text(data=am, aes(x=rushing_yds-.05, y= passing_yds+800, label=player)) +
+  geom_encircle(data=am, aes(x=rushing_yds-.05, y=passing_yds+7), s_shape=.05, expand=.002, color="black") +
+  labs(title="Adrian Martinez Not the Worst.. So Far", subtitle="Adrian looks good on a graph next to the other QBs in college football.", x="Rushing Yards", y="Passing Yards", caption="Source: cfbfastR | By Chloe Veigel") +
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(size = 13, face = "bold"),
+    axis.title = element_text(size = 10), 
+    plot.subtitle = element_text(size=10), 
+    panel.grid.minor = element_blank(),
+    plot.caption = element_text(size=8, face = "bold"),
+    plot.title.position = "plot"
+    )
+```
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+qbonly <- players21 %>% filter(position == "QB") %>% filter(conference == "Big Ten") %>% filter(passing_completions > 50)
+```
+
+
+And, well, if it didn't look like he rushed the ball all that much in the last graph, this one will change your mind. Let's put him next to the other QBs in the Big Ten.
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+topcomp <- qbs %>% filter(conference == "Big Ten") %>% 
+  arrange(desc(passing_completions)) %>% top_n(7, wt=passing_completions)
+topatt <- qbs %>% filter(conference == "Big Ten") %>% 
+  arrange(desc(passing_att)) %>% top_n(7, wt=passing_att)
+toppass <- qbs %>% filter(conference == "Big Ten") %>% 
+  arrange(desc(passing_yds)) %>% top_n(7, wt=passing_yds)
+toprush <- qbs %>% filter(conference == "Big Ten") %>% 
+  arrange(desc(rushing_yds)) %>% top_n(7, wt=rushing_yds)
+```
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+p1 <- ggplot() + 
+  geom_bar(data=topcomp, aes(x=reorder(player, passing_completions), weight=passing_completions)) + 
+  coord_flip() +
+    geom_bar(data=am, aes(x=reorder(player, passing_completions), weight=passing_completions), fill="#512888") +
+  labs(title="How Does Martinez Look in Each Category Standing Next to Other Big Ten QBs?", subtitle="One thing is for sure.. Martinez definitely rushed the ball a lot.", x="Player", y="Passing Completions") +
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(size = 12.7, face = "bold"),
+    axis.title = element_text(size = 10), 
+    plot.subtitle = element_text(size=10.7), 
+    panel.grid.minor = element_blank(),
+    plot.title.position = "plot"
+    )
+```
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+p2 <- ggplot() + 
+  geom_bar(data=topatt, aes(x=reorder(player, passing_att), weight=passing_att)) + 
+  coord_flip() +
+    geom_bar(data=am, aes(x=reorder(player, passing_att), weight=passing_att), fill="#512888") +
+  labs(title="", subtitle="", x="Player", y="Passing Attempts") +
+    theme_minimal() + 
+  theme(
+    plot.title = element_text(size = 12.7, face = "bold"),
+    axis.title = element_text(size = 10), 
+    plot.subtitle = element_text(size=10.7), 
+    panel.grid.minor = element_blank(),
+    plot.title.position = "plot"
+    )
+```
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+p3 <- ggplot() + 
+  geom_bar(data=toppass, aes(x=reorder(player, passing_yds), weight=passing_yds)) + 
+  coord_flip() +
+  geom_bar(data=am, aes(x=reorder(player, passing_yds), weight=passing_yds), fill="#512888") +
+  labs(title="", subtitle="", x="Player", y="Passing Yards", caption="") +
+    theme_minimal() + 
+  theme(
+    plot.title = element_text(size = 12.7, face = "bold"),
+    axis.title = element_text(size = 10), 
+    plot.subtitle = element_text(size=10.7), 
+    panel.grid.minor = element_blank(),
+    plot.title.position = "plot"
+    )
+```
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+p4 <- ggplot() + 
+  geom_bar(data=toprush, aes(x=reorder(player, rushing_yds), weight=rushing_yds)) +
+  geom_bar(data=am, aes(x=reorder(player, rushing_yds), weight=rushing_yds), fill="#512888") + 
+  coord_flip() +
+  labs(title="", subtitle="", x="Player", y="Rushing Yards", caption="Source: cfbfastR | By Chloe Veigel") +
+    theme_minimal() + 
+  theme(
+    plot.title = element_text(size = 12.7, face = "bold"),
+    axis.title = element_text(size = 10), 
+    plot.subtitle = element_text(size=10.7),
+    plot.caption = element_text(size=8, face = "bold"),
+    panel.grid.minor = element_blank(),
+    plot.title.position = "plot"
+    )
+```
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+plot_grid(p1, p2, p3, p4) 
+```
+
+
+He's No. 1 in something! No. 1 in rushing yards in the Big Ten! Seventh in passing completions, seventh in passing attempts and sixth in passing yards. But again, this is only showing the Big Ten, so it's nothing too awe-inspiring.
+
+
+The QBs main job is to pass the ball. No? Where does Martinez rank out in passing percentages amongst the other Big Ten QBs?
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+ggplot() + 
+  geom_bar(data=qbonly, aes(x=reorder(player, passing_pct), weight=passing_pct), fill="grey") +
+ geom_bar(data=am, aes(x=reorder(player, passing_pct), weight=passing_pct), fill="#512888") +
+  coord_flip() +
+  labs(
+    title="Where Does Adrian Martinez Fall in the Big Ten's Passing Percentages?",
+    subtitle="Martinez does not Fall too low on the graph, despite a losing season.", 
+    x="Big Ten Player", 
+    y="Passing Percentage", 
+    caption="Source: cfbfastR | By Chloe Veigel")  +
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(size = 12.7, face = "bold"),
+    axis.title = element_text(size = 10), 
+    plot.subtitle = element_text(size=10.7), 
+    panel.grid.minor = element_blank(),
+    plot.caption = element_text(size=8, face = "bold"),
+    plot.title.position = "plot"
+    )
+```
+
+
+Although not at the top of the list of the Big Ten QB's passing percentages, Martinez isn't at the bottom, which is a win for Husker Nation. His 62% passing percentage was better than expected, but not outrageously impressive.
+
+
+Given the status of the other offensive players for Nebraska, Adrian Martinez actually didn't play all too bad. Most Husker fans will say he was the issue, and maybe he was, but he will now wear purple. We'll have to wait and see what successes (or misfortunes) he'll experience next season.
+
+
+The code that generated this post and these graphs can be found [here](https://github.com/chloeveigel/Notebooks/blob/main/project%201.Rmd).
